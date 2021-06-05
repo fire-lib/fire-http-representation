@@ -6,7 +6,7 @@ use std::task::{ Context, Poll };
 use std::io::Read;
 use std::collections::VecDeque;
 
-use bytes::Bytes;
+use bytes::{Bytes, Buf};
 use tokio::io::{ self, AsyncWrite, AsyncWriteExt };
 
 /// A structure that holds multiple `Bytes`.
@@ -76,7 +76,7 @@ impl MoreBytes {
 	fn advance(&mut self, pos: usize) -> usize {
 		let act = self.active().unwrap();
 		debug_assert!(act.len() >= pos);
-		let _ = act.split_to(pos);
+		act.advance(pos);
 		if act.is_empty() {
 			let _ = self.queue.pop_front();
 		}
@@ -116,19 +116,18 @@ impl MoreBytes {
 impl Read for MoreBytes {
 	/// This won't never return an error.
 	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-		Ok(match self.get_slice() {
-			Some(slice) if buf.len() <= slice.len() => {
-				buf.copy_from_slice(&slice[..buf.len()]);
-				self.advance(buf.len())
-			},
-			// slice is smaller than buf
-			Some(slice) => {
-				let len = slice.len();
-				buf[..len].copy_from_slice(slice);
-				self.advance(len)
-			},
-			None => 0
-		})
+		let slice = match self.get_slice() {
+			Some(s) => s,
+			None => return Ok(0)
+		};
+
+		let len = slice.len()
+			.min(buf.len());
+
+		buf[..len].copy_from_slice(&slice[..len]);
+		self.advance(len);
+
+		Ok(len)
 	}
 }
 
