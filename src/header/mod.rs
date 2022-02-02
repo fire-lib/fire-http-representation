@@ -319,7 +319,7 @@ impl ResponseHeaderBuilder {
 	}
 
 	/// Builds a ResponseHeader. Using default values for all
-	/// not configered fields.
+	/// not configured fields.
 	pub fn build(self) -> ResponseHeader {
 		ResponseHeader {
 			version: self.version.unwrap_or(Version::default()),

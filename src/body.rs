@@ -1,5 +1,8 @@
 
-use crate::bytes_stream::{ BytesStream, ReaderStream, MoreBytes, StreamHttpBody, StreamReader, copy_stream_to_async_write };
+use crate::bytes_stream::{
+	BytesStream, ReaderStream, MoreBytes, StreamHttpBody, StreamReader,
+	copy_stream_to_async_write
+};
 #[cfg(feature = "hyper_body")]
 use crate::bytes_stream::HyperBodyStream;
 
@@ -416,7 +419,11 @@ impl BodyWithTimeout {
 	/// ## Panics while reading
 	/// If the body was already read more than the max_size or the max_size is 0.
 	#[cfg(feature = "hyper_body")]
-	pub fn from_hyper_body(body: hyper::Body, max_size: usize, timeout: Duration) -> Self {
+	pub fn from_hyper_body(
+		body: hyper::Body,
+		max_size: usize,
+		timeout: Duration
+	) -> Self {
 		Self {
 			body: HyperBodyStream::limit(body, max_size).into(),
 			timeout
@@ -474,6 +481,11 @@ impl BodyWithTimeout {
 	pub fn set_size_limit(&mut self, max_size: usize) -> bool {
 		// Todo add a size limit to ReaderStream
 		self.body.set_size_limit(max_size)
+	}
+
+	/// Sets the timeout.
+	pub fn set_timeout(&mut self, timeout: Duration) {
+		self.timeout = timeout;
 	}
 
 	/// Converts the body into MoreBytes returning an error if reading
