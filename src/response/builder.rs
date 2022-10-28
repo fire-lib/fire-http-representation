@@ -1,82 +1,72 @@
-
-use crate::header::{ ResponseHeaderBuilder, Version, StatusCode, ContentType, HeaderValues, IntoHeaderValue };
-use crate::body::Body;
 use super::Response;
+use crate::body::Body;
+use crate::header::{
+	ResponseHeader, StatusCode, ContentType, HeaderValues, HeaderValue,
+	values::IntoHeaderName
+};
 
-use http as raw;
+use std::fmt;
 
-
-// TODO probably remove the http version.
 
 /// A builder to create a `Response`.
 #[derive(Debug)]
 pub struct ResponseBuilder {
-	header: ResponseHeaderBuilder,
+	header: ResponseHeader,
 	body: Body
 }
 
 impl ResponseBuilder {
-
 	/// Creates a new `ResponseBuilder`.
 	pub fn new() -> Self {
 		Self {
-			header: ResponseHeaderBuilder::new(),
+			header: ResponseHeader::default(),
 			body: Body::new()
 		}
 	}
 
-	/// Sets the http version.
-	pub fn version(mut self, version: Version) -> Self {
-		self.header.version(version);
-		self
-	}
-
 	/// Sets the status code.
 	pub fn status_code(mut self, status_code: StatusCode) -> Self {
-		self.header.status_code(status_code);
+		self.header.status_code = status_code;
 		self
 	}
 
 	/// Sets the content type.
-	pub fn content_type<T>(mut self, content_type: T) -> Self
-	where T: Into<ContentType> {
-		self.header.content_type(content_type.into());
+	pub fn content_type(
+		mut self,
+		content_type: impl Into<ContentType>
+	) -> Self {
+		self.header.content_type = content_type.into();
 		self
 	}
 
 	/// Sets a header value.
 	/// 
 	/// ## Note
-	/// Only ASCII characters are allowed, use `self.values_mut().encode()`
-	/// to allow any character.
+	/// Only ASCII characters are allowed, use
+	/// `self.values_mut().insert_encoded()` to allow any character.
 	/// 
 	/// ## Panics
 	/// If the value is not a valid `HeaderValue`.
 	pub fn header<K, V>(mut self, key: K, val: V) -> Self
 	where
-		K: raw::header::IntoHeaderName,
-		V: IntoHeaderValue {
+		K: IntoHeaderName,
+		V: TryInto<HeaderValue>,
+		V::Error: fmt::Debug
+	{
 		self.values_mut().insert(key, val);
 		self
 	}
 
 	/// Returns `HeaderValues` mutably.
 	pub fn values_mut(&mut self) -> &mut HeaderValues {
-		self.header.values_mut()
+		&mut self.header.values
 	}
 
 	/// Sets the body dropping the previous one.
-	pub fn body<B>(mut self, body: B) -> Self
-	where B: Into<Body> {
-		self.body.replace(body.into());
+	pub fn body(mut self, body: impl Into<Body>) -> Self {
+		self.body = body.into();
 		self
 	}
-
-	/*pub fn body_reader<R>(mut self, reader: R) -> Self
-	where R: AsyncRead + Send + Sync + 'static {
-		self.body = Some(Body::from_reader(reader));
-		self
-	}*/
 
 	/// Builds a `Response`. Adding the `content-length` header
 	/// if the len of the body is known.
@@ -86,7 +76,8 @@ impl ResponseBuilder {
 		if let Some(len) = self.body.len() {
 			self.values_mut().insert("content-length", len);
 		}
-		Response::new(self.header.build(), self.body)
+
+		Response::new(self.header, self.body)
 	}
 
 }

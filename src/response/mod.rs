@@ -1,12 +1,8 @@
-
 mod builder;
 pub use builder::ResponseBuilder;
 
 use crate::header::{ResponseHeader, StatusCode};
 use crate::body::Body;
-
-#[cfg(feature = "timeout")]
-use std::time::Duration;
 
 /// The response created from a server.
 #[derive(Debug)]
@@ -37,20 +33,10 @@ impl Response {
 	/// Takes the body replacing it with an empty one.
 	/// 
 	/// ## Note
-	/// If you use the builder to create a `Response`
+	/// If you used the builder to create a `Response`
 	/// you should probably reset the `content-length` header.
 	pub fn take_body(&mut self) -> Body {
 		self.body.take()
-	}
-
-	/// Takes the body adding a timeout to it.
-	/// 
-	/// ## Note
-	/// If you use the builder to create a `Response`
-	/// you should probably reset the `content-length` header.
-	#[cfg(feature = "timeout")]
-	pub fn body_with_timeout(&mut self, timeout: Duration) -> crate::body::BodyWithTimeout {
-		self.body.take().add_timeout(timeout)
 	}
 }
 
