@@ -124,6 +124,12 @@ fn generate_mime(out_dir: &str) {
 			write!(from_str_fn,
 				"\t\t\t\"{ty}\" => Some(Self::{id}),\n"
 			).unwrap();
+
+			if *utf8 {
+				write!(from_str_fn,
+					"\t\t\t\"{ty}; charset=utf-8\" => Some(Self::{id}),\n"
+				).unwrap();
+			}
 		}
 
 		let ext = extensions.first().unwrap();

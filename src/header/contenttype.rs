@@ -4,8 +4,11 @@
 //! These are the most basic types, types that can be utf8 are always utf8
 //! Todo this should be redone once a clear successor of mime is available.
 
+use super::HeaderValue;
+
 use std::fmt;
 use std::str::FromStr;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Mime(MimeValue);
@@ -99,6 +102,20 @@ impl<'a> From<&'a str> for ContentType {
 		match Mime::from_str(s) {
 			Ok(m) => Self::Known(m),
 			Err(_) => Self::Unknown(s.to_string())
+		}
+	}
+}
+
+impl TryFrom<ContentType> for HeaderValue {
+	type Error = super::values::InvalidHeaderValue;
+
+	fn try_from(ct: ContentType) -> Result<Self, Self::Error> {
+		match ct {
+			ContentType::None => Ok(Self::from_static("")),
+			ContentType::Known(m) => {
+				Ok(Self::from_static(m.as_str_with_maybe_charset()))
+			},
+			ContentType::Unknown(s) => s.try_into()
 		}
 	}
 }

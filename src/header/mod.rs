@@ -37,6 +37,10 @@ impl RequestHeader {
 		&self.uri
 	}
 
+	pub fn to_url(&self) -> Option<Url> {
+		Url::from_inner(self.uri.clone())
+	}
+
 	/// Returns all header values.
 	pub fn values(&self) -> &HeaderValues {
 		&self.values
