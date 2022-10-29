@@ -271,6 +271,12 @@ impl From<String> for Body {
 	}
 }
 
+impl From<&'static str> for Body {
+	fn from(s: &'static str) -> Self {
+		Self::from_bytes(Bytes::from_static(s.as_bytes()))
+	}
+}
+
 impl From<Incoming> for Body {
 	fn from(i: Incoming) -> Self {
 		Self::from_incoming(i)

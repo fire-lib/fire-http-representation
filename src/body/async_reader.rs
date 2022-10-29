@@ -126,6 +126,8 @@ impl<R: AsyncRead> AsyncRead for ConstrainedAsyncReader<R> {
 	) -> Poll<io::Result<()>> {
 		let mut me = self.project();
 
+		let prev_filled = buf.filled().len();
+
 		if let Poll::Ready(r) = me.inner.poll_read(cx, buf) {
 			if let Err(e) = r {
 				return Poll::Ready(Err(e))
@@ -133,7 +135,8 @@ impl<R: AsyncRead> AsyncRead for ConstrainedAsyncReader<R> {
 
 			// validate size_limit
 			if let Some(size_limit) = &mut me.size_limit {
-				match size_limit.checked_sub(buf.filled().len()) {
+				let read = buf.filled().len() - prev_filled;
+				match size_limit.checked_sub(read) {
 					Some(ns) => *size_limit = ns,
 					None => return Poll::Ready(Err(size_limit_reached(
 						"async reader to big"
